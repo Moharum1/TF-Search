@@ -17,6 +17,8 @@ async def get_relative_recommendation(item : str):
     Compute the TF-IDF score for a given item and return the list
     With items that have the highest TF-IDF scores relative to the input item.
     """
+    TF_IDF_scores = TF_IDF(item, list(app.state.search.values()))
+    return TF_IDF_scores
 
 class TFIDFDoc(BaseModel):
     title: str
