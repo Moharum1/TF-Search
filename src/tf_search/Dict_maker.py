@@ -22,7 +22,8 @@ def Term_Frequency(text: str) -> dict[str, int]:
     return word_count
 
 
-def Domain_Frequency(texts: list[str]) -> dict[str, int]:
+
+def Domain_Frequency(texts: list[dict[str, int]]) -> dict[str, int]:
     """
         Calculate the Domain Frequency of the Words across multiple texts.
         texts : The texts to apply the DF algorithm.
@@ -32,8 +33,7 @@ def Domain_Frequency(texts: list[str]) -> dict[str, int]:
     domain_count: dict[str, int] = {}
 
     for text in texts:
-        word_count = Term_Frequency(text)
-        for word in word_count:
+        for word in text.keys():
             if word in domain_count:
                 domain_count[word] += 1
             else:
@@ -50,7 +50,10 @@ def IDF(word : str, docs : dict[str, int], total_documents : int) -> float:
         return :
             - float : The IDF value of the word
     """
-    return math.log(total_documents / docs.get(word, 1))
+    if total_documents == 0:
+        return 0.0
+
+    return math.log((total_documents + 1) / (docs.get(word, 0) + 1)) + 1
 
 def TF(word : str, doc : dict[str, int], total_words : int) -> float:
     """
@@ -62,21 +65,25 @@ def TF(word : str, doc : dict[str, int], total_words : int) -> float:
     """
     return doc.get(word, 0) / total_words if total_words > 0 else 0.0
 
-def TF_IDF(word : str, texts : list[str]) -> dict[str, float]:
+def TF_IDF(query : str, texts : list[dict[str, int]]) -> list[float]:
     """
-        Calculate the TF-IDF of the Words inside a Text
+        Calculate the TF-IDF of the query terms across multiple texts.
         texts : The texts to apply the TF-IDF algorithm
-        return :
-            - A Dictionary with the Text and it's TF-IDF value
+        return : A list with one combined TF-IDF value for each text
     """
 
-    tf_idf = {}
+    tf_idf = []
     document_count = Domain_Frequency(texts)
     total_documents = len(texts)
+    query_terms = Term_Frequency(query)
 
     for text in texts:
-        tf = TF(word, Term_Frequency(text), sum(Term_Frequency(text).values()))
-        idf = IDF(word, document_count, total_documents)
-        tf_idf[text] = tf * idf
+        total_words = sum(text.values())
+        score = 0.0
+        for term in query_terms:
+            score += TF(term, text, total_words) * IDF(
+                term, document_count, total_documents
+            )
+        tf_idf.append(score)
 
     return tf_idf
