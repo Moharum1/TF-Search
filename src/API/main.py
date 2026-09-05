@@ -4,6 +4,7 @@ from pydantic import BaseModel
 from sqlmodel import Session, create_engine, select
 from data.Models import TermFrequencyModel, DocumentModel, TermModel, DummyDoc
 from tf_search.Dict_maker import TF_IDF, Term_Frequency
+from API.util import convert_keys_to_values
 
 
 @asynccontextmanager
@@ -16,14 +17,20 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
+
 @app.post("/api/search")
 async def get_relative_recommendation(item : str):
     """
     Compute the TF-IDF score for a given item and return the list
     With items that have the highest TF-IDF scores relative to the input item.
     """
-    TF_IDF_scores = TF_IDF(item, list(app.state.search.values()))
-    return TF_IDF_scores
+    with Session(app.state.engine) as session:
+        # Perform the search logic here
+        data = session.exec(select(TermFrequencyModel)).all()
+        data = convert_keys_to_values(data)
+
+        TF_IDF_scores = TF_IDF(item, list(data.values()))
+        return {a: b for a, b in zip(data.keys(), TF_IDF_scores)}
 
 
 #TODO : Use Bulk Insert to insert the data into the database
@@ -55,7 +62,6 @@ async def insert_document(document: DummyDoc):
             )
         session.commit()
 
-
 @app.get("/api/GetTFIndexes")
 async def get_tf_indexes():
     """
@@ -64,5 +70,5 @@ async def get_tf_indexes():
     with Session(app.state.engine) as session:
         # Assuming you have a TermFrequencyModel defined in your models
         tf_indexes = session.exec(select(TermFrequencyModel)).all()
-        return tf_indexes
+        return convert_keys_to_values(tf_indexes)
 
