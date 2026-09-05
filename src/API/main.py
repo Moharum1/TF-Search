@@ -26,8 +26,7 @@ async def get_relative_recommendation(item : str):
     """
     with Session(app.state.engine) as session:
         # Perform the search logic here
-        data = session.exec(select(TermFrequencyModel)).all()
-        data = convert_keys_to_values(data)
+        data = convert_keys_to_values(session)
 
         TF_IDF_scores = TF_IDF(item, list(data.values()))
         return {a: b for a, b in zip(data.keys(), TF_IDF_scores)}
@@ -69,6 +68,5 @@ async def get_tf_indexes():
     """
     with Session(app.state.engine) as session:
         # Assuming you have a TermFrequencyModel defined in your models
-        tf_indexes = session.exec(select(TermFrequencyModel)).all()
-        return convert_keys_to_values(tf_indexes)
+        return convert_keys_to_values(session)
 
