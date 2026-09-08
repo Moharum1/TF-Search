@@ -1,23 +1,19 @@
 from data.Models import TermFrequencyModel, DocumentModel, TermModel
-from sqlmodel import Session, create_engine
+from sqlmodel import Session, select
 
 
-def convert_keys_to_values(tf_index: list[TermFrequencyModel]) -> dict[str, dict[str, int]]:
+def convert_keys_to_values(session: Session) -> dict[str, dict[str, int]]:
     """
     Convert a list of TermFrequencyModel instances into a dictionary
     where the keys are document titles and the values are dictionaries
     mapping terms to their frequencies.
     """
-    engine = create_engine(
-        "postgresql+psycopg://12345:12345@localhost:5432/tfidf", echo=True
+    statement = (
+        select(DocumentModel, TermModel, TermFrequencyModel)
+        .join(TermFrequencyModel, TermFrequencyModel.document_id == DocumentModel.id)
+        .join(TermModel, TermFrequencyModel.term_id == TermModel.id)
     )
-    result: dict[str, dict[str, int]] = {}
-    with Session(engine) as session:
-        for tf in tf_index:
-            document = session.get(DocumentModel, tf.document_id)
-            term = session.get(TermModel, tf.term_id)
-            if document and term:
-                if document.title not in result:
-                    result[document.title] = {}
-                result[document.title][term.term] = tf.term_count
-    return result
+    documents: dict[str, dict[str, int]] = {}
+    for document, term, term_frequency in session.exec(statement):
+        documents.setdefault(document.title, {})[term.term] = term_frequency.term_count
+    return documents

@@ -65,15 +65,18 @@ def TF(word : str, doc : dict[str, int], total_words : int) -> float:
     """
     return doc.get(word, 0) / total_words if total_words > 0 else 0.0
 
-def TF_IDF(query : str, texts : list[dict[str, int]]) -> list[float]:
+def TF_IDF(query : str, texts : list[dict[str, int]], DF : dict[str, int] = None) -> list[float]:
     """
         Calculate the TF-IDF of the query terms across multiple texts.
         texts : The texts to apply the TF-IDF algorithm
         return : A list with one combined TF-IDF value for each text
     """
+    if DF is None:
+        document_count = Domain_Frequency(texts)
+    else :
+        document_count = DF
 
     tf_idf = []
-    document_count = Domain_Frequency(texts)
     total_documents = len(texts)
     query_terms = Term_Frequency(query)
 
@@ -85,5 +88,5 @@ def TF_IDF(query : str, texts : list[dict[str, int]]) -> list[float]:
                 term, document_count, total_documents
             )
         tf_idf.append(score)
-
     return tf_idf
+
