@@ -4,7 +4,8 @@ from pydantic import BaseModel
 from sqlmodel import Session, create_engine, select
 from data.Models import TermFrequencyModel, DocumentModel, TermModel, DummyDoc, DocumentFrequencyModel
 from tf_search.Dict_maker import TF_IDF, Term_Frequency
-from API.util import convert_keys_to_values, DataIndexer
+from API.util import convert_keys_to_values
+from API.DataIndexer import DataIndexer
 
 
 @asynccontextmanager
