@@ -1,7 +1,7 @@
 CREATE TABLE documents (
     id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
     title TEXT NOT NULL UNIQUE,
-    added_at TIMESTAMP NOT NULL DEFAULT current_timestamp
+    added_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE terms (
@@ -10,8 +10,18 @@ CREATE TABLE terms (
 );
 
 CREATE TABLE document_terms (
-    FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
-    FOREIGN KEY (term_id) REFERENCES terms(id) ON DELETE CASCADE,
+    document_id BIGINT NOT NULL,
+    term_id BIGINT NOT NULL,
     term_count INTEGER NOT NULL CHECK (term_count >= 0),
-    PRIMARY KEY (document_id, term_id)
+
+    PRIMARY KEY (document_id, term_id),
+    FOREIGN KEY (document_id) REFERENCES documents(id) ON DELETE CASCADE,
+    FOREIGN KEY (term_id) REFERENCES terms(id) ON DELETE CASCADE
+);
+
+CREATE TABLE document_term_frequencies (
+    term_id BIGINT PRIMARY KEY,
+    document_frequency INTEGER NOT NULL CHECK (document_frequency >= 0),
+
+    FOREIGN KEY (term_id) REFERENCES terms(id) ON DELETE CASCADE
 );
