@@ -25,3 +25,5 @@ CREATE TABLE document_term_frequencies (
 
     FOREIGN KEY (term_id) REFERENCES terms(id) ON DELETE CASCADE
 );
+
+CREATE INDEX idx_document_terms_term_id ON document_terms(term_id, document_id);
