@@ -5,13 +5,15 @@ from sqlmodel import Session, create_engine, select
 from data.Models import TermFrequencyModel, DocumentModel, TermModel, DummyDoc, DocumentFrequencyModel
 from tf_search.Dict_maker import TF_IDF, Term_Frequency
 from API.util import convert_keys_to_values
+from API.config import settings
 from API.DataIndexer import DataIndexer
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.engine = create_engine(
-        "postgresql+psycopg://12345:12345@localhost:5432/tfidf", echo=True
+        settings.db_url,
+        echo=settings.db_echo  
     )
     yield
 
