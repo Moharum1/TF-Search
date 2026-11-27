@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
 from sqlmodel import Session, create_engine, select
@@ -18,6 +19,17 @@ async def lifespan(app: FastAPI):
     yield
 
 app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",
+        "http://127.0.0.1:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
 
@@ -57,13 +69,12 @@ async def get_relative_recommendation(item : str,
 #TODO : Use Bulk Insert to insert the data into the database
 #TODO : Use Database Indexing to speed up the search process
 @app.post("/api/InsertDoc")
-async def insert_document(document: DummyDoc):
+async def insert_document(doc : DummyDoc):
     """
     Insert a new document into the search index.
-    For now the Doc consist of a Dict in the form of {Name, Content}.
     """
-    result = DataIndexer(app.state.engine).index_document(document)
-    return result
+    indexer = DataIndexer(app.state.engine).index_document(doc)
+    return {"message": "Document inserted successfully"}
 
 
 
