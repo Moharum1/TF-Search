@@ -1,24 +1,35 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { searchDocuments } from './api/searchApi'
 import { BottomWhisper } from './components/BottomWhisper'
 import { HeroHeader } from './components/HeroHeader'
 import { ManaCanvas } from './components/ManaCanvas'
 import { ResultsSection } from './components/ResultsSection'
 import { SearchBar } from './components/SearchBar'
 import { TopBar } from './components/TopBar'
-import { QUICK_SUGGESTIONS, searchGrimoireArchive } from './data/grimoireArchive'
+import { QUICK_SUGGESTIONS } from './data/grimoireArchive'
 import { useTheme } from './hooks/useTheme'
-import type { GrimoireEntry, ManaCanvasHandle } from './types/grimoire'
+import type { ManaCanvasHandle, SearchResultItem } from './types/grimoire'
 
 export default function App() {
   const { theme, toggleTheme } = useTheme('twilight')
   const canvasRef = useRef<ManaCanvasHandle | null>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
   const [query, setQuery] = useState('')
   const [activeQuery, setActiveQuery] = useState('')
-  const [results, setResults] = useState<GrimoireEntry[]>([])
+  const [results, setResults] = useState<SearchResultItem[]>([])
+  const [total, setTotal] = useState(0)
   const [hasResults, setHasResults] = useState(false)
-  const [elapsedSeconds, setElapsedSeconds] = useState('0.04')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [elapsedSeconds, setElapsedSeconds] = useState('0.00')
   const [castCount, setCastCount] = useState(0)
+
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort()
+    }
+  }, [])
 
   const handleQueryChange = useCallback(
     (value: string, sparkCoords?: { x: number; y: number }) => {
@@ -30,28 +41,60 @@ export default function App() {
     [],
   )
 
-  const handleSearch = useCallback((searchTerm: string, origin?: { x: number; y: number }) => {
-    const start = performance.now()
-    const matches = searchGrimoireArchive(searchTerm)
-    const elapsed = Math.max((performance.now() - start) / 1000, 0.02).toFixed(2)
+  const handleSearch = useCallback(
+    async (searchTerm: string, origin?: { x: number; y: number }) => {
+      abortControllerRef.current?.abort()
+      const controller = new AbortController()
+      abortControllerRef.current = controller
 
-    setQuery(searchTerm)
-    setActiveQuery(searchTerm)
-    setResults(matches)
-    setElapsedSeconds(elapsed)
-    setHasResults(true)
-    setCastCount((prev) => prev + 1)
+      setQuery(searchTerm)
+      setActiveQuery(searchTerm)
+      setHasResults(true)
+      setIsLoading(true)
+      setError(null)
+      setCastCount((prev) => prev + 1)
 
-    if (origin) {
-      canvasRef.current?.spawnBurst(origin.x, origin.y, 24, 'petal')
-    }
-  }, [])
+      if (origin) {
+        canvasRef.current?.spawnBurst(origin.x, origin.y, 24, 'petal')
+      }
+
+      const start = performance.now()
+      try {
+        const data = await searchDocuments(searchTerm, { signal: controller.signal })
+        const elapsed = ((performance.now() - start) / 1000).toFixed(3)
+
+        setResults(data.results)
+        setTotal(data.total)
+        setElapsedSeconds(elapsed)
+      } catch (err) {
+        if (err instanceof DOMException && err.name === 'AbortError') {
+          return
+        }
+        setResults([])
+        setTotal(0)
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Unable to reach the TF-IDF search backend.',
+        )
+      } finally {
+        if (abortControllerRef.current === controller) {
+          setIsLoading(false)
+        }
+      }
+    },
+    [],
+  )
 
   const handleResetHome = useCallback(() => {
+    abortControllerRef.current?.abort()
     setHasResults(false)
     setQuery('')
     setActiveQuery('')
     setResults([])
+    setTotal(0)
+    setError(null)
+    setIsLoading(false)
   }, [])
 
   const handleCardClick = useCallback((x: number, y: number) => {
@@ -80,8 +123,11 @@ export default function App() {
         <ResultsSection
           activeQuery={activeQuery}
           results={results}
+          total={total}
           elapsedSeconds={elapsedSeconds}
           castCount={castCount}
+          isLoading={isLoading}
+          error={error}
           onCardClick={handleCardClick}
         />
       </main>

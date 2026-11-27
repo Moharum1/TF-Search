@@ -561,27 +561,26 @@ body {
   bottom: 8%;
 }
 
-.card-header {
+.card-row {
   display: flex;
   justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.card-identity {
+  display: flex;
   align-items: baseline;
   gap: 12px;
-  margin-bottom: 6px;
+  min-width: 0;
 }
 
-.card-category {
+.card-rank {
   font-family: 'Cinzel', serif;
-  font-size: 0.7rem;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
   color: var(--gold);
-}
-
-.card-era {
-  font-family: 'Cormorant Garamond', serif;
-  font-style: italic;
-  font-size: 0.88rem;
-  color: var(--text-muted);
+  flex-shrink: 0;
 }
 
 .card-title {
@@ -589,30 +588,74 @@ body {
   font-weight: 600;
   font-size: 1.42rem;
   color: var(--text-primary);
-  margin-bottom: 8px;
+  margin-bottom: 0;
   transition: color 0.3s ease;
+  word-break: break-word;
 }
 
 .grimoire-card:hover .card-title {
   color: var(--cyan);
 }
 
-.card-excerpt {
-  font-size: 0.92rem;
-  line-height: 1.65;
-  color: var(--text-secondary);
-  font-weight: 300;
+.score-badge {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--pill-bg);
+  border: 1px solid var(--border);
+  flex-shrink: 0;
 }
 
-.card-footer {
-  margin-top: 14px;
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  font-size: 0.78rem;
-  color: var(--text-muted);
+.score-label {
   font-family: 'Cinzel', serif;
-  letter-spacing: 0.08em;
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.score-value {
+  font-family: 'Inter', monospace;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--cyan);
+  font-variant-numeric: tabular-nums;
+}
+
+.score-bar-track {
+  margin-top: 14px;
+  height: 3px;
+  width: 100%;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.score-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--gold), var(--cyan));
+  transition: width 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.results-state {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 24px 26px;
+  text-align: center;
+  font-family: 'Cormorant Garamond', serif;
+  font-style: italic;
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  backdrop-filter: blur(14px);
+}
+
+.results-error {
+  border-color: rgba(255, 130, 130, 0.45);
+  color: #ffb4b4;
 }
 
 /* =========================================

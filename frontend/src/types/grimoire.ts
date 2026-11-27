@@ -1,13 +1,13 @@
 export type Theme = 'twilight' | 'dawn'
 
-export interface GrimoireEntry {
-  id: string
+export interface SearchResultItem {
   title: string
-  category: string
-  era: string
-  excerpt: string
-  tags?: string[]
-  score?: number
+  score: number
+}
+
+export interface SearchResponse {
+  total: number
+  results: SearchResultItem[]
 }
 
 export interface SearchSuggestion {
