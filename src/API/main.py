@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
 from sqlmodel import Session, create_engine, select
-from data.Models import TermFrequencyModel, DocumentModel, TermModel, DummyDoc, DocumentFrequencyModel
+from data.Models import TermFrequencyModel, DocumentModel, TermModel, DummyDoc, DocumentFrequencyModel, SearchResponseModel, SearchResultModel
 from tf_search.Dict_maker import TF_IDF, Term_Frequency
 from API.util import convert_keys_to_values
 from API.config import settings
@@ -24,7 +24,7 @@ app = FastAPI(lifespan=lifespan)
 @app.get("/api/search")
 async def get_relative_recommendation(item : str, 
         limit: int = 5, offset: int = 0, min_score : float = 0.01
-    ):
+    ) -> SearchResponseModel:
     """
     Compute the TF-IDF score for a given item and return the list
     With items that have the highest TF-IDF scores relative to the input item.
@@ -46,10 +46,12 @@ async def get_relative_recommendation(item : str,
         matched.sort(key=lambda x: (-x[1], x[0]))
 
         page = matched[offset : offset + limit]
-        return {
-            "total": len(matched),
-            "results": [{"title": title, "score": score} for title, score in page],
-        }
+        return SearchResponseModel(
+            total=len(matched),
+            results=[
+                SearchResultModel(title=title, score=score) for title, score in page
+            ],
+        )
 
 
 #TODO : Use Bulk Insert to insert the data into the database
