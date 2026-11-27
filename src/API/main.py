@@ -2,16 +2,18 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from pydantic import BaseModel
 from sqlmodel import Session, create_engine, select
-from data.Models import TermFrequencyModel, DocumentModel, TermModel, DummyDoc, DocumentFrequencyModel
+from data.Models import TermFrequencyModel, DocumentModel, TermModel, DummyDoc, DocumentFrequencyModel, SearchResponseModel, SearchResultModel
 from tf_search.Dict_maker import TF_IDF, Term_Frequency
 from API.util import convert_keys_to_values
+from API.config import settings
 from API.DataIndexer import DataIndexer
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     app.state.engine = create_engine(
-        "postgresql+psycopg://12345:12345@localhost:5432/tfidf", echo=True
+        settings.db_url,
+        echo=settings.db_echo  
     )
     yield
 
@@ -19,8 +21,10 @@ app = FastAPI(lifespan=lifespan)
 
 
 
-@app.post("/api/search")
-async def get_relative_recommendation(item : str):
+@app.get("/api/search")
+async def get_relative_recommendation(item : str, 
+        limit: int = 5, offset: int = 0, min_score : float = 0.01
+    ) -> SearchResponseModel:
     """
     Compute the TF-IDF score for a given item and return the list
     With items that have the highest TF-IDF scores relative to the input item.
@@ -30,11 +34,24 @@ async def get_relative_recommendation(item : str):
         data = convert_keys_to_values(session)
         DF = session.exec(select(
             DocumentFrequencyModel.document_frequency, TermModel.term
-        ).join(TermModel, DocumentFrequencyModel.id == TermModel.id)).all()
+        ).join(TermModel, DocumentFrequencyModel.term_id == TermModel.id)).all()
         DF = {row.term: row.document_frequency for row in DF}
 
-        TF_IDF_scores = TF_IDF(item, list(data.values()), DF)
-        return {a: b for a, b in zip(data.keys(), TF_IDF_scores)}
+        scores = TF_IDF(item, list(data.values()), DF)
+        matched = [
+            (title, score)
+            for title, score in zip(data.keys(), scores)
+            if score >= min_score
+        ]
+        matched.sort(key=lambda x: (-x[1], x[0]))
+
+        page = matched[offset : offset + limit]
+        return SearchResponseModel(
+            total=len(matched),
+            results=[
+                SearchResultModel(title=title, score=score) for title, score in page
+            ],
+        )
 
 
 #TODO : Use Bulk Insert to insert the data into the database
