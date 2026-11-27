@@ -2,7 +2,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     postgres_user : str
-    postgres_pass : str
+    postgres_password : str
     postgres_host : str  = "localhost"
     postgres_port : int  = 5432
     postgres_db   : str  = "tfidf"
@@ -14,6 +14,6 @@ class Settings(BaseSettings):
 
     @property
     def db_url(self) -> str:
-        return f"postgresql+asyncpg://{self.postgres_user}:{self.postgres_pass}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
+        return f"postgresql+psycopg://{self.postgres_user}:{self.postgres_password}@{self.postgres_host}:{self.postgres_port}/{self.postgres_db}"
 
 settings = Settings()
