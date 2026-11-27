@@ -6,15 +6,17 @@ import { ManaCanvas } from './components/ManaCanvas'
 import { ResultsSection } from './components/ResultsSection'
 import { SearchBar } from './components/SearchBar'
 import { TopBar } from './components/TopBar'
+import { UploadPage } from './components/UploadPage'
 import { QUICK_SUGGESTIONS } from './data/grimoireArchive'
 import { useTheme } from './hooks/useTheme'
-import type { ManaCanvasHandle, SearchResultItem } from './types/grimoire'
+import type { ManaCanvasHandle, PageView, SearchResultItem } from './types/grimoire'
 
 export default function App() {
   const { theme, toggleTheme } = useTheme('twilight')
   const canvasRef = useRef<ManaCanvasHandle | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
 
+  const [activePage, setActivePage] = useState<PageView>('search')
   const [query, setQuery] = useState('')
   const [activeQuery, setActiveQuery] = useState('')
   const [results, setResults] = useState<SearchResultItem[]>([])
@@ -101,36 +103,52 @@ export default function App() {
     canvasRef.current?.spawnBurst(x, y, 12, 'petal')
   }, [])
 
+  const handleUploadBurst = useCallback((x: number, y: number) => {
+    canvasRef.current?.spawnBurst(x, y, 28, 'petal')
+  }, [])
+
   const handleCastFlowerField = useCallback(() => {
     canvasRef.current?.castFlowerField()
   }, [])
 
   return (
-    <div className={`app-shell${hasResults ? ' has-results' : ''}`}>
+    <div className={`app-shell${activePage === 'search' && hasResults ? ' has-results' : ''}`}>
       <ManaCanvas ref={canvasRef} />
-      <TopBar theme={theme} onToggleTheme={toggleTheme} />
+      <TopBar
+        theme={theme}
+        activePage={activePage}
+        onToggleTheme={toggleTheme}
+        onNavigate={setActivePage}
+      />
 
-      <main className="stage">
-        <HeroHeader onReset={handleResetHome} />
-        <SearchBar
-          query={query}
-          castCount={castCount}
-          suggestions={QUICK_SUGGESTIONS}
-          onQueryChange={handleQueryChange}
-          onSearch={handleSearch}
-          onClear={() => setQuery('')}
+      {activePage === 'upload' ? (
+        <UploadPage
+          onSuccessBurst={handleUploadBurst}
+          onGoToSearch={() => setActivePage('search')}
         />
-        <ResultsSection
-          activeQuery={activeQuery}
-          results={results}
-          total={total}
-          elapsedSeconds={elapsedSeconds}
-          castCount={castCount}
-          isLoading={isLoading}
-          error={error}
-          onCardClick={handleCardClick}
-        />
-      </main>
+      ) : (
+        <main className="stage">
+          <HeroHeader onReset={handleResetHome} />
+          <SearchBar
+            query={query}
+            castCount={castCount}
+            suggestions={QUICK_SUGGESTIONS}
+            onQueryChange={handleQueryChange}
+            onSearch={handleSearch}
+            onClear={() => setQuery('')}
+          />
+          <ResultsSection
+            activeQuery={activeQuery}
+            results={results}
+            total={total}
+            elapsedSeconds={elapsedSeconds}
+            castCount={castCount}
+            isLoading={isLoading}
+            error={error}
+            onCardClick={handleCardClick}
+          />
+        </main>
+      )}
 
       <BottomWhisper onCastFlowerField={handleCastFlowerField} />
     </div>

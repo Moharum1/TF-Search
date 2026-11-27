@@ -1,4 +1,5 @@
 export type Theme = 'twilight' | 'dawn'
+export type PageView = 'search' | 'upload'
 
 export interface SearchResultItem {
   title: string
@@ -8,6 +9,11 @@ export interface SearchResultItem {
 export interface SearchResponse {
   total: number
   results: SearchResultItem[]
+}
+
+export interface InsertDocumentResponse {
+  message?: string
+  error?: string
 }
 
 export interface SearchSuggestion {

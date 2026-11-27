@@ -1,4 +1,4 @@
-import type { SearchResponse } from '../types/grimoire'
+import type { InsertDocumentResponse, SearchResponse } from '../types/grimoire'
 
 export interface SearchOptions {
   limit?: number
@@ -31,4 +31,29 @@ export async function searchDocuments(
   }
 
   return (await response.json()) as SearchResponse
+}
+
+export async function insertDocument(
+  title: string,
+  content: string,
+): Promise<InsertDocumentResponse> {
+  const response = await fetch('/api/InsertDoc', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify({ title, content }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`Upload failed (${response.status} ${response.statusText})`)
+  }
+
+  const data = (await response.json()) as InsertDocumentResponse
+  if (data.error) {
+    throw new Error(data.error)
+  }
+
+  return data
 }

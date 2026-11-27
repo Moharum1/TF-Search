@@ -1,11 +1,13 @@
-import type { Theme } from '../types/grimoire'
+import type { PageView, Theme } from '../types/grimoire'
 
 interface TopBarProps {
   theme: Theme
+  activePage: PageView
   onToggleTheme: () => void
+  onNavigate: (page: PageView) => void
 }
 
-export function TopBar({ theme, onToggleTheme }: TopBarProps) {
+export function TopBar({ theme, activePage, onToggleTheme, onNavigate }: TopBarProps) {
   const isTwilight = theme === 'twilight'
 
   return (
@@ -16,6 +18,25 @@ export function TopBar({ theme, onToggleTheme }: TopBarProps) {
       </div>
 
       <div className="controls">
+        <nav className="nav-tabs" aria-label="Primary navigation">
+          <button
+            type="button"
+            className={`ghost-btn${activePage === 'search' ? ' active-nav' : ''}`}
+            onClick={() => onNavigate('search')}
+          >
+            <span>✦</span>
+            <span>Search</span>
+          </button>
+          <button
+            type="button"
+            className={`ghost-btn${activePage === 'upload' ? ' active-nav' : ''}`}
+            onClick={() => onNavigate('upload')}
+          >
+            <span>＋</span>
+            <span>Upload .txt</span>
+          </button>
+        </nav>
+
         <button
           type="button"
           className="ghost-btn"
